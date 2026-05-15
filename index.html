@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickPrice - Zdjęcie → Ceny</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
         h1 { text-align: center; color: #333; }
@@ -31,8 +29,7 @@
             width: 100%;
             margin: 10px 0;
         }
-        .results { margin-top: 20px; }
-        .detected { background: white; padding: 15px; border-radius: 8px; }
+        .note { text-align: center; color: #666; font-size: 14px; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -47,32 +44,17 @@
 
         <div id="preview"></div>
 
-        <button onclick="analyzeImage()">🔍 Analizuj zdjęcie i sprawdź ceny</button>
+        <button onclick="openCEX()">🛒 Otwórz CEX UK</button>
+        <button onclick="openEbayCurrent()">📦 Otwórz eBay UK (aktualne)</button>
+        <button onclick="openEbaySold()">💰 Otwórz eBay UK SPRZEDANE</button>
 
-        <div id="results" class="results"></div>
+        <div class="note">
+            Wrzuć zdjęcie, zobacz co to jest i kliknij przycisk – dostaniesz ceny bez wpisywania nazwy.<br>
+            (Dla automatycznego rozpoznawania wrzuć zdjęcie do Grok w czacie)
+        </div>
     </div>
 
     <script>
-        let model = null;
-        let currentImage = null;
-
-        async function loadModel() {
-            if (model) return model;
-            try {
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = '<p>Ładuję model AI (pierwszy raz trwa dłużej)...</p>';
-                model = await cocoSsd.load();
-                console.log('✅ Model COCO-SSD załadowany');
-                resultsDiv.innerHTML = '';
-                return model;
-            } catch (e) {
-                console.error(e);
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = '<p style="color:red">Błąd ładowania modelu. Spróbuj odświeżyć stronę.</p>';
-                throw e;
-            }
-        }
-
         // Handle file upload
         document.getElementById('drop-zone').addEventListener('click', () => {
             document.getElementById('file-input').click();
@@ -83,8 +65,7 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
-                    currentImage = ev.target.result;
-                    showPreview(currentImage);
+                    showPreview(ev.target.result);
                 };
                 reader.readAsDataURL(file);
             }
@@ -92,63 +73,20 @@
 
         function showPreview(src) {
             const preview = document.getElementById('preview');
-            preview.innerHTML = `<img src="${src}" id="image-preview" style="max-width:100%">`;
+            preview.innerHTML = `<img src="${src}" style="max-width:100%; border-radius:8px;">`;
         }
 
-        async function analyzeImage() {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<p>Analizuję zdjęcie...</p>';
-
-            const img = document.getElementById('image-preview');
-            if (!img) {
-                resultsDiv.innerHTML = '<p style="color:red">Najpierw wrzuć zdjęcie!</p>';
-                return;
-            }
-
-            try {
-                await loadModel();
-
-                if (!model || typeof model.detect !== 'function') {
-                    throw new Error('Model nie jest gotowy');
-                }
-
-                const predictions = await model.detect(img);
-                
-                if (predictions.length === 0) {
-                    resultsDiv.innerHTML = '<p>Nie wykryto przedmiotów. Spróbuj inne zdjęcie lub lepsze oświetlenie.</p>';
-                    return;
-                }
-
-                // Najlepsze wykrycie
-                predictions.sort((a, b) => b.score - a.score);
-                const top = predictions[0];
-                const label = top.class;
-
-                resultsDiv.innerHTML = `
-                    <div class="detected">
-                        <strong>Wykryto:</strong> ${label} (pewność: ${(top.score*100).toFixed(0)}%)<br>
-                        Otwieram CEX + eBay sprzedane...
-                    </div>
-                `;
-
-                const query = encodeURIComponent(label);
-                
-                window.open(`https://uk.webuy.com/search?stext=${query}`, '_blank');
-                window.open(`https://www.ebay.co.uk/sch/i.html?_nkw=${query}`, '_blank');
-                window.open(`https://www.ebay.co.uk/sch/i.html?_nkw=${query}&LH_Sold=1&LH_Complete=1&_sop=13`, '_blank');
-
-            } catch (error) {
-                console.error(error);
-                resultsDiv.innerHTML = `<p style="color:red">Błąd: ${error.message || 'Nie udało się wykryć przedmiotu'}</p>`;
-            }
+        function openCEX() {
+            window.open('https://uk.webuy.com/search?stext=', '_blank');
         }
 
-        // Auto load on page load
-        window.onload = async () => {
-            try {
-                await loadModel();
-            } catch (e) {}
-        };
+        function openEbayCurrent() {
+            window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
+        }
+
+        function openEbaySold() {
+            window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
+        }
     </script>
 </body>
 </html>
