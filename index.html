@@ -5,21 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuickPrice</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
-    input { width: 100%; padding: 12px; font-size: 18px; margin-bottom: 12px; }
-    button { width: 100%; padding: 14px; font-size: 18px; background: #0066ff; color: white; border: none; border-radius: 8px; }
-    .info { color: #666; font-size: 14px; margin-top: 20px; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 16px;
+      background: #f8f9fa;
+    }
+    h1 { margin-bottom: 8px; }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #0066ff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:active { background: #0052cc; }
+    .note {
+      font-size: 14px;
+      color: #555;
+      background: #fff3cd;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .photo-note {
+      background: #d4edda;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <h1>QuickPrice</h1>
-  <p>Sprawdź ceny na CEX i eBay (w tym sprzedane)</p>
-  
-  <input type="text" id="item" placeholder="Wpisz nazwę rzeczy (np. iPhone 13, PS5)">
-  <button onclick="checkPrices()">Sprawdź ceny</button>
+  <p style="color:#666; margin-top:0;">CEX + eBay sprzedane</p>
 
-  <div class="info">
-    Otworzy 3 karty: CEX + eBay aktualne + eBay sprzedane
+  <div class="card">
+    <input type="text" id="item" placeholder="Nazwa rzeczy (np. iPhone 13, PS5)">
+    <button onclick="checkPrices()">Sprawdź ceny</button>
+  </div>
+
+  <div class="photo-note">
+    <strong>Zdjęcia:</strong> Wklej/wrzuć zdjęcie tutaj w czacie — sprawdzę ceny za Ciebie (bez wpisywania).
+  </div>
+
+  <div class="note">
+    Otworzy 3 karty: CEX UK + eBay aktualne + eBay sprzedane
   </div>
 
   <script>
@@ -29,20 +82,13 @@
         alert('Wpisz nazwę rzeczy');
         return;
       }
-
       const q = encodeURIComponent(item);
 
-      // CEX
       window.open(`https://uk.webuy.com/search?stext=${q}`, '_blank');
-      
-      // eBay aktualne
       window.open(`https://www.ebay.co.uk/sch/i.html?_nkw=${q}&_sacat=0`, '_blank');
-      
-      // eBay sprzedane
       window.open(`https://www.ebay.co.uk/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1&_sop=13`, '_blank');
     }
 
-    // Enter key support
     document.getElementById('item').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') checkPrices();
     });
