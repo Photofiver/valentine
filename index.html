@@ -3,76 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickPrice</title>
+    <title>QuickPrice - Skaner kodów</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; text-align: center; }
-        h1 { color: #0066ff; }
-        #drop-zone {
-            border: 4px dashed #0066ff;
-            border-radius: 20px;
-            padding: 60px 20px;
-            margin: 30px auto;
-            max-width: 500px;
-            background: white;
-            cursor: pointer;
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+            text-align: center;
         }
-        #drop-zone:hover { background: #f0f8ff; }
-        img { max-width: 100%; border-radius: 12px; margin-top: 20px; }
-        .note { color: #666; font-size: 15px; margin-top: 30px; }
+        h1 { color: #0066ff; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        button {
+            background: #0066ff;
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        button:hover { background: #0052cc; }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        .note {
+            color: #666;
+            font-size: 14px;
+            margin-top: 30px;
+        }
     </style>
 </head>
 <body>
     <h1>QuickPrice</h1>
-    <p style="color:#0066ff;">Zeskanuj kod lub wrzuć zdjęcie → automatycznie CEX + eBay sold</p>
+    <p class="subtitle">Zeskanuj kod QR lub kreskowy → automatycznie CEX + eBay sold</p>
 
-    <div id="drop-zone">
-        <p>Wrzuć zdjęcie lub zeskanuj kod</p>
-        <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none;">
-    </div>
+    <div id="reader" style="display: none;"></div>
+    
+    <button id="start-btn">Skanuj kod QR / kreskowy</button>
 
-    <div id="preview"></div>
+    <div id="result"></div>
 
     <div class="note">
-        Po wrzuceniu zdjęcia automatycznie otworzy CEX UK + eBay aktualne + eBay sprzedane
+        Po zeskanowaniu automatycznie otworzy CEX UK + eBay aktualne + eBay sprzedane<br>
+        Działa najlepiej z kodami kreskowymi produktów
     </div>
 
     <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const preview = document.getElementById('preview');
+        const startBtn = document.getElementById('start-btn');
+        const readerDiv = document.getElementById('reader');
+        const resultDiv = document.getElementById('result');
+        let html5QrCode;
 
-        dropZone.addEventListener('click', () => fileInput.click());
+        function openLinks(code) {
+            const cexUrl = `https://uk.webuy.com/search?stext=${encodeURIComponent(code)}`;
+            const ebayCurrent = `https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(code)}&_sacat=0`;
+            const ebaySold = `https://www.ebay.co.uk/sch/i.html?_nkw=${encodeURIComponent(code)}&LH_Sold=1&LH_Complete=1&_sop=13`;
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    preview.innerHTML = `<img src="${ev.target.result}">`;
-                    // Automatycznie otwiera linki
-                    window.open('https://uk.webuy.com/search?stext=', '_blank');
-                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
-                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+            window.open(cexUrl, '_blank');
+            window.open(ebayCurrent, '_blank');
+            window.open(ebaySold, '_blank');
 
-        // Drag and drop support
-        dropZone.addEventListener('dragover', (e) => e.preventDefault());
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    preview.innerHTML = `<img src="${ev.target.result}">`;
-                    window.open('https://uk.webuy.com/search?stext=', '_blank');
-                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
-                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
-                };
-                reader.readAsDataURL(file);
-            }
+            resultDiv.innerHTML = `
+                <strong>Zeskanowano:</strong> ${code}<br>
+                Otwarto 3 karty: CEX + eBay aktualne + eBay sprzedane
+            `;
+        }
+
+        startBtn.addEventListener('click', () => {
+            startBtn.style.display = 'none';
+            readerDiv.style.display = 'block';
+
+            html5QrCode = new Html5Qrcode("reader");
+
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE, Html5QrcodeScanType.SCAN_TYPE_1D]
+            };
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText, decodedResult) => {
+                    // Sukces - zatrzymaj skaner i otwórz linki
+                    html5QrCode.stop().then(() => {
+                        readerDiv.style.display = 'none';
+                        openLinks(decodedText);
+                    }).catch(err => console.error(err));
+                },
+                (errorMessage) => {
+                    // ignorujemy błędy skanowania na bieżąco
+                }
+            ).catch(err => {
+                resultDiv.innerHTML = "Błąd kamery: " + err;
+            });
         });
     </script>
 </body>
