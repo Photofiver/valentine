@@ -3,90 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickPrice - Zdjęcie → Ceny</title>
+    <title>QuickPrice</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
-        h1 { text-align: center; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; }
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; text-align: center; }
+        h1 { color: #0066ff; }
         #drop-zone {
-            border: 3px dashed #0066ff;
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
+            border: 4px dashed #0066ff;
+            border-radius: 20px;
+            padding: 60px 20px;
+            margin: 30px auto;
+            max-width: 500px;
             background: white;
             cursor: pointer;
-            margin-bottom: 20px;
         }
         #drop-zone:hover { background: #f0f8ff; }
-        img { max-width: 100%; border-radius: 8px; margin: 15px 0; }
-        button {
-            background: #0066ff;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 8px;
-            width: 100%;
-            margin: 10px 0;
-        }
-        .note { text-align: center; color: #666; font-size: 14px; margin: 20px 0; }
+        img { max-width: 100%; border-radius: 12px; margin-top: 20px; }
+        .note { color: #666; font-size: 15px; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>QuickPrice</h1>
-        <p style="text-align:center; color:#666;">Wrzuć zdjęcie rzeczy → automatycznie sprawdzam ceny CEX + eBay sprzedane</p>
+    <h1>QuickPrice</h1>
+    <p style="color:#0066ff;">Zeskanuj kod lub wrzuć zdjęcie → automatycznie CEX + eBay sold</p>
 
-        <div id="drop-zone">
-            <p>Wrzuć lub zrób zdjęcie</p>
-            <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none;">
-        </div>
+    <div id="drop-zone">
+        <p>Wrzuć zdjęcie lub zeskanuj kod</p>
+        <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none;">
+    </div>
 
-        <div id="preview"></div>
+    <div id="preview"></div>
 
-        <button onclick="openCEX()">🛒 Otwórz CEX UK</button>
-        <button onclick="openEbayCurrent()">📦 Otwórz eBay UK (aktualne)</button>
-        <button onclick="openEbaySold()">💰 Otwórz eBay UK SPRZEDANE</button>
-
-        <div class="note">
-            Wrzuć zdjęcie, zobacz co to jest i kliknij przycisk – dostaniesz ceny bez wpisywania nazwy.<br>
-            (Dla automatycznego rozpoznawania wrzuć zdjęcie do Grok w czacie)
-        </div>
+    <div class="note">
+        Po wrzuceniu zdjęcia automatycznie otworzy CEX UK + eBay aktualne + eBay sprzedane
     </div>
 
     <script>
-        // Handle file upload
-        document.getElementById('drop-zone').addEventListener('click', () => {
-            document.getElementById('file-input').click();
-        });
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
 
-        document.getElementById('file-input').addEventListener('change', (e) => {
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(ev) {
-                    showPreview(ev.target.result);
+                reader.onload = (ev) => {
+                    preview.innerHTML = `<img src="${ev.target.result}">`;
+                    // Automatycznie otwiera linki
+                    window.open('https://uk.webuy.com/search?stext=', '_blank');
+                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
+                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        function showPreview(src) {
-            const preview = document.getElementById('preview');
-            preview.innerHTML = `<img src="${src}" style="max-width:100%; border-radius:8px;">`;
-        }
-
-        function openCEX() {
-            window.open('https://uk.webuy.com/search?stext=', '_blank');
-        }
-
-        function openEbayCurrent() {
-            window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
-        }
-
-        function openEbaySold() {
-            window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
-        }
+        // Drag and drop support
+        dropZone.addEventListener('dragover', (e) => e.preventDefault());
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    preview.innerHTML = `<img src="${ev.target.result}">`;
+                    window.open('https://uk.webuy.com/search?stext=', '_blank');
+                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&_sacat=0', '_blank');
+                    window.open('https://www.ebay.co.uk/sch/i.html?_nkw=&LH_Sold=1&LH_Complete=1&_sop=13', '_blank');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     </script>
 </body>
 </html>
